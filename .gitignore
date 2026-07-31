@@ -1,0 +1,4 @@
+capslock-daemon
+*.o
+result
+result-*
