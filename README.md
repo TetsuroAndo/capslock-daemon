@@ -63,12 +63,6 @@ tail -f /var/log/capslock-daemon.log
 pmset -g | grep -i sleepdisabled
 ```
 
-Uninstall:
-
-```sh
-sudo make uninstall
-```
-
 ### Nix
 
 ```nix
@@ -78,6 +72,36 @@ sudo make uninstall
   # in your nix-darwin configuration
   imports = [ inputs.capslock-daemon.darwinModules.default ];
 }
+```
+
+Note that the Nix module registers the daemon under the label `org.nixos.capslock-daemon`, not `com.tetsuroando.capslock-daemon`. The `make` targets below do not apply to a Nix install — see [Turning it off](#turning-it-off).
+
+## Turning it off
+
+Stopping the daemon always restores `SleepDisabled=0` on the way out, so you never end up with a machine that refuses to sleep because you turned this off at the wrong moment.
+
+Installed with `make` (label `com.tetsuroando.capslock-daemon`):
+
+```sh
+sudo make disable      # stop now, and stay stopped across reboots
+sudo make enable       # start it again
+sudo make uninstall    # remove the binary and the LaunchDaemon entirely
+```
+
+Installed via the Nix module (label `org.nixos.capslock-daemon`) — `make` does not know about this install, so use `launchctl` directly:
+
+```sh
+sudo launchctl bootout system/org.nixos.capslock-daemon     # stop until the next boot or switch
+sudo launchctl disable system/org.nixos.capslock-daemon     # also stay stopped across reboots
+sudo launchctl enable system/org.nixos.capslock-daemon      # undo the above
+```
+
+To remove it for good under Nix, drop `capslock-daemon.darwinModules.default` from your configuration and run your usual `darwin-rebuild switch`. That is the only removal the Nix declaration will not undo the next time you switch.
+
+Which label you have:
+
+```sh
+ls /Library/LaunchDaemons | grep capslock
 ```
 
 ## Caveat

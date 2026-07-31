@@ -10,7 +10,7 @@ DAEMONS  := /Library/LaunchDaemons
 CFLAGS   ?= -O2 -Wall -Wextra
 LDFLAGS  := -framework IOKit -framework CoreFoundation
 
-.PHONY: all clean install uninstall status log
+.PHONY: all clean install uninstall enable disable status log
 
 all: $(BIN)
 
@@ -36,6 +36,20 @@ uninstall:
 	-launchctl bootout system/$(LABEL) 2>/dev/null
 	rm -f $(DAEMONS)/$(LABEL).plist $(LIBEXEC)/$(BIN)
 	@echo "uninstalled. SleepDisabled is now: $$(pmset -g | awk '/SleepDisabled/{print $$2}')"
+
+# bootout alone lasts until the next boot; the disable list is what makes it
+# stick. The daemon restores SleepDisabled=0 as it exits either way.
+disable:
+	@[ "$$(id -u)" -eq 0 ] || { echo "run: sudo make disable" >&2; exit 1; }
+	-launchctl bootout system/$(LABEL) 2>/dev/null
+	launchctl disable system/$(LABEL)
+	@echo "disabled. SleepDisabled is now: $$(pmset -g | awk '/SleepDisabled/{print $$2}')"
+
+enable:
+	@[ "$$(id -u)" -eq 0 ] || { echo "run: sudo make enable" >&2; exit 1; }
+	launchctl enable system/$(LABEL)
+	-launchctl bootstrap system $(DAEMONS)/$(LABEL).plist 2>/dev/null
+	@echo "enabled."
 
 status:
 	@launchctl print system/$(LABEL) 2>/dev/null | grep -E '^\s+(state|pid|last exit)' || echo "not loaded"
