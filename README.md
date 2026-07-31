@@ -1,5 +1,7 @@
 # capslock-daemon
 
+[![ci](https://github.com/TetsuroAndo/capslock-daemon/actions/workflows/ci.yml/badge.svg)](https://github.com/TetsuroAndo/capslock-daemon/actions/workflows/ci.yml)
+
 While Caps Lock is on, your Mac will not sleep. Turn it off and normal sleep behaviour returns.
 
 The Caps Lock LED is the status indicator — there is no menu bar icon, no window, and no app.
