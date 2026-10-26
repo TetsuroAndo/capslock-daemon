@@ -42,12 +42,15 @@
       });
 
       # nix-darwin module. Runs as root — SleepDisabled is a privileged setting.
-      # ProgramArguments points at the store path directly rather than through a
-      # shell, so the background item is named for itself in System Settings.
+      # `command`, not a bare store path in ProgramArguments: nix-darwin wraps it
+      # in `wait4path /nix/store`. The Nix Store volume is mounted after
+      # LaunchDaemons load at boot, so a bare path fails with EX_CONFIG and
+      # launchd never retries. The cost is that System Settings lists the
+      # background item as `sh` rather than by name.
       darwinModules.default = { pkgs, ... }: {
         launchd.daemons.capslock-daemon = {
+          command = "${mkPackage pkgs}/bin/capslock-daemon";
           serviceConfig = {
-            ProgramArguments = [ "${mkPackage pkgs}/bin/capslock-daemon" ];
             RunAtLoad = true;
             KeepAlive = true;
             ThrottleInterval = 10;
